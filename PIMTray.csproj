@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>PIMTray</RootNamespace>
+    <AssemblyName>PIMTray</AssemblyName>
+    <Win32Resource>Resources\PIMTray.res</Win32Resource>
+
+    <Product>PIM Tray</Product>
+    <AssemblyTitle>PIM Tray</AssemblyTitle>
+    <Description>Activate Entra ID PIM roles from the Windows tray.</Description>
+    <Company>Thomas Marcussen</Company>
+    <Authors>Thomas Marcussen</Authors>
+    <Copyright>Copyright (c) 2026 Thomas Marcussen</Copyright>
+    <Trademark>Thomas Marcussen</Trademark>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.66.2" />
+    <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.66.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\tray.ico" />
+  </ItemGroup>
+
+</Project>

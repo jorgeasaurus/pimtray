@@ -1,0 +1,27 @@
+# .NET build output
+bin/
+obj/
+
+# Rider / VS / VS Code
+.vs/
+.idea/
+*.user
+*.suo
+
+# Publish output
+*.pdb
+*.wixpdb
+
+# Local secrets / user state
+appsettings.local.json
+*.snk
+*.pfx
+
+# OS junk
+Thumbs.db
+.DS_Store
+
+# WiX intermediate / installer output
+*.wixobj
+installer/*.msi
+installer/*.wixpdb

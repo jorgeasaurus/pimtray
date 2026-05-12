@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+
+  <Package Name="PIM Tray"
+           Manufacturer="Thomas Marcussen"
+           Version="1.0.0.0"
+           UpgradeCode="2c9f4a17-8b53-4a16-9c1c-3e2d5f7b4a82"
+           Scope="perMachine"
+           Compressed="yes"
+           InstallerVersion="500">
+
+    <SummaryInformation Description="PIM Tray - Activate Entra ID PIM roles from the Windows tray." />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="PIMTray.ico" SourceFile="..\Resources\tray.ico" />
+    <Property Id="ARPPRODUCTICON" Value="PIMTray.ico" />
+    <Property Id="ARPHELPLINK" Value="https://thomasmarcussen.com" />
+    <Property Id="ARPURLINFOABOUT" Value="https://blog.thomasmarcussen.com" />
+    <Property Id="ARPCONTACT" Value="Thomas@ThomasMarcussen.com" />
+    <Property Id="ARPNOMODIFY" Value="1" />
+    <Property Id="ARPNOREPAIR" Value="1" />
+
+    <Feature Id="Main" Title="PIM Tray" Level="1">
+      <ComponentGroupRef Id="MainFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
+    </Feature>
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="PIM Tray" />
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="PIMTrayMenuFolder" Name="PIM Tray" />
+    </StandardDirectory>
+
+
+    <ComponentGroup Id="MainFiles" Directory="INSTALLFOLDER">
+      <Component Id="MainExe" Bitness="always64">
+        <File Id="PIMTrayExe"
+              Source="..\bin\Release\net9.0-windows\win-x64\publish\PIMTray.exe"
+              KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <Component Id="StartMenuShortcut"
+               Directory="PIMTrayMenuFolder"
+               Guid="7d8e2a91-6f44-4c11-bb5e-9a3c8d2e1f60">
+      <Shortcut Id="StartMenuPIMTray"
+                Name="PIM Tray"
+                Description="Activate Entra ID PIM roles from the Windows tray."
+                Target="[#PIMTrayExe]"
+                WorkingDirectory="INSTALLFOLDER"
+                Icon="PIMTray.ico" />
+      <RemoveFolder Id="RemovePIMTrayMenuFolder" Directory="PIMTrayMenuFolder" On="uninstall" />
+      <RegistryValue Root="HKCU"
+                     Key="Software\Thomas Marcussen\PIM Tray"
+                     Name="installed"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+    </Component>
+
+  </Package>
+</Wix>

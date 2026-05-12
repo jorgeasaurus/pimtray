@@ -1,0 +1,114 @@
+using Microsoft.Identity.Client;
+using Microsoft.Identity.Client.Extensions.Msal;
+
+namespace PIMTray.Auth;
+
+public sealed class AuthService
+{
+    private static readonly string[] Scopes =
+    {
+        "https://graph.microsoft.com/RoleEligibilitySchedule.Read.Directory",
+        "https://graph.microsoft.com/RoleAssignmentSchedule.ReadWrite.Directory",
+        "https://graph.microsoft.com/User.Read"
+    };
+
+    private readonly IPublicClientApplication _app;
+    private IAccount? _account;
+
+    private AuthService(IPublicClientApplication app)
+    {
+        _app = app;
+    }
+
+    public static async Task<AuthService> CreateAsync(AzureAdConfig cfg)
+    {
+        var app = PublicClientApplicationBuilder
+            .Create(cfg.ClientId)
+            .WithAuthority(AzureCloudInstance.AzurePublic, cfg.TenantId)
+            .WithRedirectUri(cfg.RedirectUri)
+            .WithClientName("PIMTray")
+            .WithClientVersion("1.0.0")
+            .Build();
+
+        await AttachTokenCacheAsync(app);
+        return new AuthService(app);
+    }
+
+    private static async Task AttachTokenCacheAsync(IPublicClientApplication app)
+    {
+        var cacheDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "PIMTray");
+        Directory.CreateDirectory(cacheDir);
+
+        var props = new StorageCreationPropertiesBuilder("msal_cache.bin", cacheDir).Build();
+        var helper = await MsalCacheHelper.CreateAsync(props);
+        helper.RegisterCache(app.UserTokenCache);
+    }
+
+    public async Task<AuthResult> SignInAsync(CancellationToken ct = default)
+    {
+        var accounts = await _app.GetAccountsAsync();
+        _account = accounts.FirstOrDefault();
+
+        AuthenticationResult result;
+        if (_account is not null)
+        {
+            try
+            {
+                result = await _app.AcquireTokenSilent(Scopes, _account).ExecuteAsync(ct);
+            }
+            catch (MsalUiRequiredException)
+            {
+                result = await AcquireInteractiveAsync(ct);
+            }
+        }
+        else
+        {
+            result = await AcquireInteractiveAsync(ct);
+        }
+
+        _account = result.Account;
+        return new AuthResult(result.AccessToken, result.Account.Username, GetUserObjectId(result));
+    }
+
+    public async Task<AuthResult?> TryGetTokenSilentAsync(CancellationToken ct = default)
+    {
+        var accounts = await _app.GetAccountsAsync();
+        _account = accounts.FirstOrDefault();
+        if (_account is null) return null;
+
+        try
+        {
+            var result = await _app.AcquireTokenSilent(Scopes, _account).ExecuteAsync(ct);
+            return new AuthResult(result.AccessToken, result.Account.Username, GetUserObjectId(result));
+        }
+        catch (MsalUiRequiredException)
+        {
+            return null;
+        }
+    }
+
+    public async Task SignOutAsync()
+    {
+        var accounts = await _app.GetAccountsAsync();
+        foreach (var a in accounts)
+            await _app.RemoveAsync(a);
+        _account = null;
+    }
+
+    private Task<AuthenticationResult> AcquireInteractiveAsync(CancellationToken ct)
+    {
+        return _app.AcquireTokenInteractive(Scopes)
+            .WithUseEmbeddedWebView(false)
+            .WithPrompt(Prompt.SelectAccount)
+            .ExecuteAsync(ct);
+    }
+
+    private static string GetUserObjectId(AuthenticationResult r)
+    {
+        return r.UniqueId;
+    }
+}
+
+public sealed record AuthResult(string AccessToken, string Username, string UserObjectId);
