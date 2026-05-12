@@ -36,12 +36,6 @@ That's it - one dialog, one round-trip, one balloon notification when each role 
 
 ---
 
-## Screenshots
-
-> Add screenshots here: tray icon, main window with checked rows, activate dialog, About box.
-
----
-
 ## Install
 
 **Option A - MSI (recommended)**
