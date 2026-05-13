@@ -72,7 +72,10 @@ On first run the app creates `%APPDATA%\PIMTray\appsettings.json`:
   "AzureAd": {
     "TenantId": "common",
     "ClientId": "14d82eec-204b-4c2f-b7e8-296a70dab67e",
-    "RedirectUri": "http://localhost"
+    "RedirectUri": "http://localhost",
+    "Cloud": "Public",
+    "GraphResource": null,
+    "GraphBaseUrl": null
   },
   "Pim": {
     "DefaultDurationHours": 1,
@@ -86,8 +89,13 @@ On first run the app creates `%APPDATA%\PIMTray\appsettings.json`:
 | `AzureAd.TenantId`          | `common` for multi-tenant, or your tenant GUID for single-tenant.                                          |
 | `AzureAd.ClientId`          | Default is the public **Microsoft Graph PowerShell** app (`14d82eec-...`). Replace with your own app reg.  |
 | `AzureAd.RedirectUri`       | Must match the redirect URI configured on the app registration. `http://localhost` is the standard choice. |
+| `AzureAd.Cloud`             | Cloud environment: `Public`, `USGovernment` (GCC/GCC High), `USDod`, `China`, or `Germany`.               |
+| `AzureAd.GraphResource`     | Optional override for Graph resource root used in scopes (for example `https://graph.microsoft.us`).       |
+| `AzureAd.GraphBaseUrl`      | Optional override for Graph REST base URL (for example `https://graph.microsoft.us/v1.0`).                 |
 | `Pim.DefaultDurationHours`  | Pre-selected duration in the Activate dialog.                                                              |
 | `Pim.DurationOptionsHours`  | The list of durations shown in the dropdown.                                                               |
+
+For GCC High, set `AzureAd.Cloud` to `USGovernment`.
 
 ### Required Graph permissions (delegated)
 

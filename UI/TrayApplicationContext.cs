@@ -77,7 +77,7 @@ public sealed class TrayApplicationContext : ApplicationContext
         {
             _cfg = AppConfig.Load();
             _auth = await AuthService.CreateAsync(_cfg.AzureAd);
-            _pim = new PimService(_http);
+            _pim = new PimService(_http, _cfg.AzureAd);
 
             var silent = await _auth.TryGetTokenSilentAsync();
             if (silent is not null)
