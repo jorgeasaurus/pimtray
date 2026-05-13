@@ -5,33 +5,30 @@ namespace PIMTray.Auth;
 
 public sealed class AuthService
 {
-    private static readonly string[] Scopes =
-    {
-        "https://graph.microsoft.com/RoleEligibilitySchedule.Read.Directory",
-        "https://graph.microsoft.com/RoleAssignmentSchedule.ReadWrite.Directory",
-        "https://graph.microsoft.com/User.Read"
-    };
-
     private readonly IPublicClientApplication _app;
+    private readonly string[] _scopes;
     private IAccount? _account;
 
-    private AuthService(IPublicClientApplication app)
+    private AuthService(IPublicClientApplication app, string[] scopes)
     {
         _app = app;
+        _scopes = scopes;
     }
 
     public static async Task<AuthService> CreateAsync(AzureAdConfig cfg)
     {
+        var cloud = AzureCloudSettingsResolver.Resolve(cfg);
+
         var app = PublicClientApplicationBuilder
             .Create(cfg.ClientId)
-            .WithAuthority(AzureCloudInstance.AzurePublic, cfg.TenantId)
+            .WithAuthority(cloud.AuthorityCloud, cfg.TenantId)
             .WithRedirectUri(cfg.RedirectUri)
             .WithClientName("PIMTray")
             .WithClientVersion("1.0.0")
             .Build();
 
         await AttachTokenCacheAsync(app);
-        return new AuthService(app);
+        return new AuthService(app, BuildScopes(cloud.GraphResource));
     }
 
     private static async Task AttachTokenCacheAsync(IPublicClientApplication app)
@@ -56,7 +53,7 @@ public sealed class AuthService
         {
             try
             {
-                result = await _app.AcquireTokenSilent(Scopes, _account).ExecuteAsync(ct);
+                result = await _app.AcquireTokenSilent(_scopes, _account).ExecuteAsync(ct);
             }
             catch (MsalUiRequiredException)
             {
@@ -80,7 +77,7 @@ public sealed class AuthService
 
         try
         {
-            var result = await _app.AcquireTokenSilent(Scopes, _account).ExecuteAsync(ct);
+            var result = await _app.AcquireTokenSilent(_scopes, _account).ExecuteAsync(ct);
             return new AuthResult(result.AccessToken, result.Account.Username, GetUserObjectId(result));
         }
         catch (MsalUiRequiredException)
@@ -99,11 +96,18 @@ public sealed class AuthService
 
     private Task<AuthenticationResult> AcquireInteractiveAsync(CancellationToken ct)
     {
-        return _app.AcquireTokenInteractive(Scopes)
+        return _app.AcquireTokenInteractive(_scopes)
             .WithUseEmbeddedWebView(false)
             .WithPrompt(Prompt.SelectAccount)
             .ExecuteAsync(ct);
     }
+
+    private static string[] BuildScopes(string graphResource) => new[]
+    {
+        $"{graphResource}/RoleEligibilitySchedule.Read.Directory",
+        $"{graphResource}/RoleAssignmentSchedule.ReadWrite.Directory",
+        $"{graphResource}/User.Read"
+    };
 
     private static string GetUserObjectId(AuthenticationResult r)
     {

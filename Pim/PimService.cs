@@ -7,12 +7,13 @@ namespace PIMTray.Pim;
 
 public sealed class PimService
 {
-    private const string GraphBase = "https://graph.microsoft.com/v1.0";
     private readonly HttpClient _http;
+    private readonly string _graphBase;
 
-    public PimService(HttpClient http)
+    public PimService(HttpClient http, AzureAdConfig cfg)
     {
         _http = http;
+        _graphBase = AzureCloudSettingsResolver.Resolve(cfg).GraphBaseUrl;
     }
 
     public void SetAccessToken(string accessToken)
@@ -22,7 +23,7 @@ public sealed class PimService
 
     public async Task<IReadOnlyList<EligibleRole>> GetEligibleRolesAsync(string userObjectId, CancellationToken ct = default)
     {
-        var url = $"{GraphBase}/roleManagement/directory/roleEligibilitySchedules"
+        var url = $"{_graphBase}/roleManagement/directory/roleEligibilitySchedules"
                 + $"?$filter=principalId eq '{userObjectId}'"
                 + "&$expand=roleDefinition";
 
@@ -77,7 +78,7 @@ public sealed class PimService
         };
 
         using var resp = await _http.PostAsJsonAsync(
-            $"{GraphBase}/roleManagement/directory/roleAssignmentScheduleRequests",
+            $"{_graphBase}/roleManagement/directory/roleAssignmentScheduleRequests",
             body,
             new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull },
             ct);

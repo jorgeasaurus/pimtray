@@ -55,7 +55,8 @@ public sealed class AppConfig
         {
             TenantId = "common",
             ClientId = "14d82eec-204b-4c2f-b7e8-296a70dab67e",
-            RedirectUri = "http://localhost"
+            RedirectUri = "http://localhost",
+            Cloud = "Public"
         },
         Pim = new PimConfig
         {
@@ -70,6 +71,9 @@ public sealed class AzureAdConfig
     public string TenantId { get; set; } = "common";
     public string ClientId { get; set; } = "";
     public string RedirectUri { get; set; } = "http://localhost";
+    public string Cloud { get; set; } = "Public";
+    public string? GraphResource { get; set; }
+    public string? GraphBaseUrl { get; set; }
 }
 
 public sealed class PimConfig
