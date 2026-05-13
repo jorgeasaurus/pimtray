@@ -56,9 +56,13 @@ public static class AzureCloudSettingsResolver
         if (graphResource is not null && graphBase is null)
             graphBase = $"{graphResource}/v1.0";
 
-        if (graphResource is not null && graphBase is not null && GetOrigin(graphResource) != GetOrigin(graphBase))
-            throw new InvalidOperationException(
-                "AzureAd.GraphResource and AzureAd.GraphBaseUrl must use the same origin.");
+        if (graphResource is not null && graphBase is not null)
+        {
+            var hasSameOrigin = GetOrigin(graphResource) == GetOrigin(graphBase);
+            if (!hasSameOrigin)
+                throw new InvalidOperationException(
+                    "AzureAd.GraphResource and AzureAd.GraphBaseUrl must use the same origin.");
+        }
 
         return new AzureCloudSettings(defaults.AuthorityCloud, graphResource!, graphBase!);
     }
@@ -77,7 +81,7 @@ public static class AzureCloudSettingsResolver
         var path = uri.AbsolutePath;
         if (!string.IsNullOrEmpty(path) && path != "/")
             throw new InvalidOperationException(
-                $"AzureAd.{fieldName} must be an origin only (for example https://graph.microsoft.com), without a path.");
+                $"AzureAd.{fieldName} must be an origin-only URL (for example https://graph.microsoft.com) without a path component.");
 
         return GetOrigin(url);
     }
