@@ -102,7 +102,7 @@ public sealed class AuthService
             .ExecuteAsync(ct);
     }
 
-    private static string[] BuildScopes(string graphResource) =>
+    private static string[] BuildScopes(string graphResource) => new[]
     {
         $"{graphResource}/RoleEligibilitySchedule.Read.Directory",
         $"{graphResource}/RoleAssignmentSchedule.ReadWrite.Directory",
