@@ -11,7 +11,7 @@ public static class AzureCloudSettingsResolver
 {
     public static AzureCloudSettings Resolve(AzureAdConfig cfg)
     {
-        var cloud = (cfg.Cloud ?? "Public").Trim();
+        var cloud = string.IsNullOrWhiteSpace(cfg.Cloud) ? "Public" : cfg.Cloud.Trim();
         var defaults = cloud.ToLowerInvariant() switch
         {
             "public" => new AzureCloudSettings(
@@ -44,12 +44,21 @@ public static class AzureCloudSettingsResolver
         if (graphResource is null && graphBase is null)
             return defaults;
 
+        if (graphResource is not null)
+            graphResource = ParseGraphResource(graphResource, nameof(cfg.GraphResource));
+
+        if (graphBase is not null)
+            graphBase = ParseAbsoluteUrl(graphBase, nameof(cfg.GraphBaseUrl));
+
         if (graphResource is null && graphBase is not null)
-            graphResource = TryGetOrigin(graphBase) ?? throw new InvalidOperationException(
-                $"AzureAd.GraphBaseUrl '{cfg.GraphBaseUrl}' must be an absolute URL.");
+            graphResource = GetOrigin(graphBase);
 
         if (graphResource is not null && graphBase is null)
             graphBase = $"{graphResource}/v1.0";
+
+        if (graphResource is not null && graphBase is not null && GetOrigin(graphResource) != GetOrigin(graphBase))
+            throw new InvalidOperationException(
+                $"AzureAd.{nameof(cfg.GraphResource)} and AzureAd.{nameof(cfg.GraphBaseUrl)} must use the same origin.");
 
         return new AzureCloudSettings(defaults.AuthorityCloud, graphResource!, graphBase!);
     }
@@ -60,10 +69,39 @@ public static class AzureCloudSettingsResolver
         return value.Trim().TrimEnd('/');
     }
 
-    private static string? TryGetOrigin(string absoluteUrl)
+    private static string ParseGraphResource(string value, string fieldName)
+    {
+        var url = ParseAbsoluteUrl(value, fieldName);
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            throw new InvalidOperationException($"AzureAd.{fieldName} must be an absolute URL.");
+
+        var path = uri.AbsolutePath;
+        if (!string.IsNullOrEmpty(path) && path != "/")
+            throw new InvalidOperationException(
+                $"AzureAd.{fieldName} must be an origin only (for example https://graph.microsoft.com), without path/query/fragment.");
+
+        if (!string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
+            throw new InvalidOperationException(
+                $"AzureAd.{fieldName} must not include query or fragment components.");
+
+        return uri.GetLeftPart(UriPartial.Authority);
+    }
+
+    private static string ParseAbsoluteUrl(string value, string fieldName)
+    {
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri))
+            throw new InvalidOperationException($"AzureAd.{fieldName} must be an absolute URL.");
+
+        if (!string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
+            throw new InvalidOperationException($"AzureAd.{fieldName} must not include query or fragment components.");
+
+        return value;
+    }
+
+    private static string GetOrigin(string absoluteUrl)
     {
         if (!Uri.TryCreate(absoluteUrl, UriKind.Absolute, out var uri))
-            return null;
+            throw new InvalidOperationException($"'{absoluteUrl}' must be an absolute URL.");
         return uri.GetLeftPart(UriPartial.Authority);
     }
 }
