@@ -72,17 +72,12 @@ public static class AzureCloudSettingsResolver
     private static string ParseGraphResource(string value, string fieldName)
     {
         var url = ParseAbsoluteUrl(value, fieldName);
-        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
-            throw new InvalidOperationException($"AzureAd.{fieldName} must be an absolute URL.");
+        var uri = new Uri(url, UriKind.Absolute);
 
         var path = uri.AbsolutePath;
         if (!string.IsNullOrEmpty(path) && path != "/")
             throw new InvalidOperationException(
-                $"AzureAd.{fieldName} must be an origin only (for example https://graph.microsoft.com), without path/query/fragment.");
-
-        if (!string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
-            throw new InvalidOperationException(
-                $"AzureAd.{fieldName} must not include query or fragment components.");
+                $"AzureAd.{fieldName} must be an origin only (for example https://graph.microsoft.com), without a path.");
 
         return uri.GetLeftPart(UriPartial.Authority);
     }
